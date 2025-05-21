@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Print-MO Quote Calculator</title>
+    
+    <style>
+        /* Page & Font */
+        body {
+        background: #F8F4EA;
+        /* use a clean, readable system font stack */
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+        margin: 20px;
+        }
+    
+        h1 {
+        color: #6391b6;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        /* match body font for consistency */
+        font-family: inherit;
+        }
+    
+        /* Layout */
+        #topContainer {
+        display: flex;
+        gap: 20px;
+        }
+
+        #ssCostArea {
+          background: #FFF;
+          border: 3px solid #6391b6;
+          border-radius: 8px;
+          padding: 16px;
+          flex: 1;
+          text-align: center;
+        }
+
+        #controls, #printArea {
+        background: #FFF;
+        border: 3px solid #6391b6;
+        border-radius: 8px;
+        padding: 16px;
+        flex: 1;
+        }
+    
+        /* Labels & Inputs */
+        label {
+        display: block;
+        margin-top: 12px;
+        font-size: 0.9em;
+        font-family: inherit;
+        }
+        select, input[type="number"], input[type="text"] {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+        border: 2px solid #6391b6;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 0.9em;
+        background: #F0F8FF;
+        }
+    
+        /* Checkboxes */
+        .checkbox-group {
+        margin-top: 20px;
+        }
+        .checkbox-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.9em;
+        font-family: inherit;
+        }
+        .checkbox-group input {
+        margin-right: 8px;
+        }
+    
+        /* Buttons */
+        button {
+        background: #6391b6;
+        color: #FFF;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 14px;
+        margin-top: 12px;
+        font-size: 0.9em;
+        font-family: inherit;
+        cursor: pointer;
+        }
+        button:hover {
+        opacity: 0.9;
+        }
+    
+        /* Order table */
+        table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        font-size: 0.9em;
+        font-family: inherit;
+        }
+        th, td {
+        border: 2px solid #6391b6;
+        padding: 6px;
+        text-align: left;
+        }
+        th {
+        background: #6391b6;
+        color: #FFF;
+        }
+    
+        /* Quote box */
+        textarea {
+        width: 100%;
+        height: 180px;
+        margin-top: 16px;
+        padding: 8px;
+        font-family: inherit;
+        font-size: 0.9em;
+        border: 2px solid #6391b6;
+        border-radius: 4px;
+        background: #F0F8FF;
+        }
+        
+        .cost-panels {
+          display: flex;
+          gap: 1rem;
+          margin: 1rem 0;
+          align-items: stretch;
+        }
+
+        /* master box style (borders, rounding, background) */
+        .costArea {
+          border: 2px solid #6391b6;
+          border-radius: 6px;
+          background: #fff;
+          padding: 0.5rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          text-align: center;
+        }
+
+        /* make the big panel twice as wide as the small one */
+        .largePanel {
+          flex: 2;
+          display: flex;             /* split into two columns */
+          flex-direction: row;
+          align-items: stretch;
+        }
+
+        /* each half of the large panel gets equal width */
+        .largePanel .subCost {
+          flex: 1;
+          border-left: 1px solid #6391b6;
+          padding: 0 0.5rem;
+        }
+        /* remove the left border on the first half */
+        .largePanel .subCost:first-child {
+          border-left: none;
+        }
+
+        /* small side‐panel for profit */
+        .smallPanel {
+          flex: 1;
+          /* single column, so nothing special */
+        }
+    </style>
+    </head>
+<body>
+  <h1>Print-MO Quote Calculator</h1>
+
+  <div id="topContainer">
+    <!-- Controls panel -->
+    <div id="controls">
+      <label>Apparel Type:
+        <select id="typeSelect"></select>
+      </label>
+      <label>Search Products:
+        <input id="prodSearch" type="text" placeholder="Type to filter…" />
+      </label>
+      <label>Product:
+        <select id="productSelect"></select>
+      </label>
+      <label>Color:
+        <select id="colorSelect">
+          <option value="">Loading…</option>
+        </select>
+      </label>
+      <label>Size:
+        <select id="sizeSelect"></select>
+      </label>
+      <label>Quantity:
+        <input id="qtyInput" type="number" min="1" value="1" />
+      </label>
+      <button id="addBtn">Add to Order</button>
+      <button id="reloadBtn">Reload Data</button>
+    </div>
+
+    <!-- Print options panel -->
+    <div id="printArea">
+      <h3 style="margin-top:0; color:#6391b6; font-size:1em;">Print Options</h3>
+      <div class="checkbox-group" id="printOptions"></div>
+    </div>
+  </div>
+
+  <div class="cost-panels">
+    <!-- 1) Big panel: S&S + Prints -->
+    <div class="costArea largePanel">
+      <div class="subCost">
+        <h3 style="margin-top:0; color:#6391b6; font-size:1.1em;">
+          S&amp;S Blank Cost
+        </h3>
+        <p id="ssCostValue" style="
+            font-size:1.5em;
+            margin:0;
+            padding:8px 0;
+            color:#333;
+          ">$0.00</p>
+      </div>
+      <div class="subCost">
+        <h3 style="margin-top:0; color:#6391b6; font-size:1.1em;">
+          Prints Cost
+        </h3>
+        <p id="printsCostValue" style="
+            font-size:1.5em;
+            margin:0;
+            padding:8px 0;
+            color:#333;
+          ">$0.00</p>
+      </div>
+    </div>
+  
+    <!-- 2) Small panel: Profit -->
+    <div class="costArea smallPanel">
+      <h3 style="margin-top:0; color:#6391b6; font-size:1.1em;">
+        Estimated Profit
+      </h3>
+      <p id="profitValue" style="
+          font-size:1.5em;
+          margin:0;
+          padding:8px 0;
+          color:#333;
+        ">$0.00</p>
+    </div>
+  </div>
+
+  <!-- Order summary -->
+  <table id="orderTable">
+    <thead>
+      <tr>
+        <th>#</th><th>Product</th><th>Size</th>
+        <th>Qty</th><th>Prints</th>
+        <th>Price/Unit</th><th>Line Total</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Quote & copy -->
+  <button id="createQuoteBtn">Create Quote</button>
+  <button id="copyBtn">Copy to Clipboard</button>
+  <textarea id="quoteBox" readonly></textarea>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
