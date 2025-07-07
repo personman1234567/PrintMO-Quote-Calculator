@@ -13,8 +13,8 @@ const printOptions = [
   { label: 'Breast Print', price: 2.00 },
   { label: 'Chest Print',  price: 5.00 },
   { label: 'Full Print',   price: 8.00 },
-  { label: 'Sleeve #1',    price: 2.00 },
-  { label: 'Sleeve #2',    price: 2.00 },
+  { label: 'Sleeve #1',    price: 4.00 },
+  { label: 'Sleeve #2',    price: 4.00 },
   { label: 'Neck Tag',     price: 2.00 },
   { label: 'Back Tag',     price: 2.00 },
   { label: 'Half Back',    price: 5.00 },
@@ -35,10 +35,10 @@ const printDims = {
 
 const discountTiers = [
   { min: 1,   max: 11,       pct: 0,    label: '0%' },
-  { min: 12,  max: 24,       pct: 0.10, label: '10%' },
-  { min: 25,  max: 48,       pct: 0.15, label: '15%' },
-  { min: 49,  max: 72,       pct: 0.20, label: '20%' },
-  { min: 73,  max: 96,       pct: 0.25, label: '25%' },
+  { min: 12,  max: 24,       pct: 0.10, label: '5%' },
+  { min: 25,  max: 48,       pct: 0.15, label: '10%' },
+  { min: 49,  max: 72,       pct: 0.20, label: '15%' },
+  { min: 73,  max: 96,       pct: 0.25, label: '20%' },
   { min: 100, max: Infinity, pct: 0,    label: 'Negotiable' },
 ];
 
@@ -46,7 +46,7 @@ function getDiscountTier(qty) {
   return discountTiers.find(t => qty >= t.min && qty <= t.max);
 }
 
-function loadProducts() {
+async function loadProducts() {
   const rawPath = path.join(__dirname, 'products.csv');
   const raw     = fs.readFileSync(rawPath, 'utf8');
   const { data } = Papa.parse(raw, { header: true, skipEmptyLines: true });
@@ -68,6 +68,7 @@ function loadProducts() {
 
   populateTypeSelect();
   updateProductOptions();
+  await updateColorOptions();
 }
 
 function renderOrderTable() {
@@ -172,8 +173,12 @@ function updateSizeOptions() {
 }
 
 function updateProfitPanel() {
-  const customerTotal = cart.reduce((sum, item) =>
+  const subtotal  = cart.reduce((sum, item) =>
     sum + item.unitPrice * item.qty, 0);
+  const totalQty  = cart.reduce((sum, item) => sum + item.qty, 0);
+  const tier      = getDiscountTier(totalQty);
+  const customerTotal = subtotal * (1 - tier.pct);
+  
   const ssTotal = cart.reduce((sum, item) =>
     sum + item.ssPrice * item.qty, 0);
   const printsTotal = calcPrintCost();
@@ -410,9 +415,9 @@ async function addEventListeners() {
     });
 
   document.getElementById('reloadBtn')
-    .addEventListener('click', () => {
+    .addEventListener('click', async () => {
       cart = [];
-      loadProducts();
+      await loadProducts();
       renderOrderTable();
       document.getElementById('quoteBox').value = '';
     });
@@ -429,6 +434,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // --- existing initialization ---
   renderPrintOptions();
-  loadProducts();
+  await loadProducts();
   await addEventListeners();
 });
