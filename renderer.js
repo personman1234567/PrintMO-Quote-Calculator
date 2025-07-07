@@ -9,17 +9,38 @@ const { fetchBlankPrice, fetchVariants } = require('./ssApi');
 let products = [];
 let cart     = [];
 
-const printOptions = [
-  { label: 'Breast Print', price: 2.00 },
-  { label: 'Chest Print',  price: 5.00 },
-  { label: 'Full Print',   price: 8.00 },
-  { label: 'Sleeve #1',    price: 4.00 },
-  { label: 'Sleeve #2',    price: 4.00 },
-  { label: 'Neck Tag',     price: 2.00 },
-  { label: 'Back Tag',     price: 2.00 },
-  { label: 'Half Back',    price: 5.00 },
-  { label: 'Full Back',    price: 8.00 },
-];
+// Print options vary by apparel type.  The keys here are matched
+// case-insensitively against the value from the "Apparel Type" select.
+const printOptionsByType = {
+  tshirt: [
+    { label: 'Breast Print', price: 2.00 },
+    { label: 'Chest Print',  price: 5.00 },
+    { label: 'Full Print',   price: 8.00 },
+    { label: 'Sleeve #1',    price: 4.00 },
+    { label: 'Sleeve #2',    price: 4.00 },
+    { label: 'Neck Tag',     price: 2.00 },
+    { label: 'Back Tag',     price: 2.00 },
+    { label: 'Half Back',    price: 5.00 },
+    { label: 'Full Back',    price: 8.00 },
+  ],
+  hoodie: [
+    { label: 'Breast Print',      price: 2.00 },
+    { label: 'Chest Print',       price: 5.00 },
+    { label: 'Full Front',        price: 8.00 },
+    { label: 'Half Sleeve Left',  price: 5.00 },
+    { label: 'Half Sleeve Right', price: 5.00 },
+    { label: 'Full Sleeve Left',  price: 8.00 },
+    { label: 'Full Sleeve Right', price: 8.00 },
+    { label: 'Neck Tag',          price: 2.00 },
+    { label: 'Hood Print',        price: 5.00 },
+    { label: 'Back Tag',          price: 2.00 },
+    { label: 'Half Back',         price: 5.00 },
+    { label: 'Full Back',         price: 8.00 },
+  ]
+};
+
+// store currently rendered options to make collecting values easier
+let currentPrintOptions = printOptionsByType.tshirt;
 
 const printDims = {
   'Breast Print': { w: 5,  h: 5  },
@@ -31,6 +52,13 @@ const printDims = {
   'Back Tag':     { w: 4,  h: 4  },
   'Half Back':    { w: 11, h: 8  },
   'Full Back':    { w: 11, h: 14 },
+  // hoodie specific
+  'Full Front':        { w: 14, h: 11 },
+  'Half Sleeve Left':  { w: 4,  h: 12 },
+  'Half Sleeve Right': { w: 4,  h: 12 },
+  'Full Sleeve Left':  { w: 4,  h: 24 },
+  'Full Sleeve Right': { w: 4,  h: 24 },
+  'Hood Print':        { w: 8,  h: 8  },
 };
 
 const discountTiers = [
@@ -156,6 +184,7 @@ function updateProductOptions() {
   });
   document.getElementById('prodSearch').value = '';
   updateSizeOptions();
+  renderPrintOptions(chosenType || '');
 }
 
 function updateSizeOptions() {
@@ -282,10 +311,18 @@ async function updateColorOptions() {
   });
 }
 
-function renderPrintOptions() {
+function getPrintOptionsForType(type) {
+  if (!type) return printOptionsByType.tshirt;
+  const t = String(type).toLowerCase();
+  if (t.includes('hoodie')) return printOptionsByType.hoodie;
+  return printOptionsByType.tshirt;
+}
+
+function renderPrintOptions(type) {
+  currentPrintOptions = getPrintOptionsForType(type);
   const container = document.getElementById('printOptions');
   container.innerHTML = '';
-  printOptions.forEach((opt,i) => {
+  currentPrintOptions.forEach((opt,i) => {
     const id = `printOpt${i}`;
     const lbl = document.createElement('label');
     lbl.innerHTML = `<input type="checkbox" id="${id}" data-price="${opt.price}"> ${opt.label}`;
@@ -342,7 +379,7 @@ async function addEventListeners() {
 
       const chosenPrints = [];
       const printPrices  = {};
-      printOptions.forEach((opt,i) => {
+      currentPrintOptions.forEach((opt,i) => {
         const cb = document.getElementById(`printOpt${i}`);
         if (cb.checked) {
           chosenPrints.push(opt.label);
@@ -433,7 +470,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   // }
 
   // --- existing initialization ---
-  renderPrintOptions();
   await loadProducts();
   await addEventListeners();
 });
